@@ -8,6 +8,7 @@
 #define WILL 'W'
 #define CHROLLO 'C'
 #define EMPTY '_'
+#define PORTAL '0'
 #define ROCK '@'
 #define TREE '#'
 
@@ -17,6 +18,8 @@ typedef struct{
     int pos_y;
     int life;
     int rage;
+    int portal_power;
+    int upside_down_power;
 
 }Eleven;
 
@@ -190,15 +193,19 @@ Eleven* create_eleven(Eleven* eleven){
     eleven->pos_y = 5;
     eleven->life = 100;
     eleven->rage = 0;
+    eleven->portal_power = 0;
+    eleven->upside_down_power = 0;
 
     return eleven;
 }
 
 //CHARACTERS MOVEMENT
 
-void eleven_movement(Game* game){
+int eleven_mechanic(Game* game){
     game->empty_room[game->eleven->pos_x][game->eleven->pos_y] = EMPTY;
     int button;
+    int check_movement = 0;
+
 
     button = getch();
 
@@ -206,28 +213,82 @@ void eleven_movement(Game* game){
     if(button == 'W' || button == 'w'){
         if(game->eleven->pos_x - 1 >= 0 && game->empty_room[game->eleven->pos_x - 1][game->eleven->pos_y] == EMPTY){
             game->eleven->pos_x--;
+            check_movement = 1;
+        }
+        else if(game->eleven->pos_x - 1 >= 0 && game->empty_room[game->eleven->pos_x - 1][game->eleven->pos_y] == PORTAL){
+            game->eleven->pos_x--;
+            check_movement = 1;
+            game->eleven->upside_down_power = 1;
         }
     }
     //DOWN
     else if(button == 'S' || button == 's'){
         if(game->eleven->pos_x + 1 < 10 && game->empty_room[game->eleven->pos_x + 1][game->eleven->pos_y] == EMPTY){
             game->eleven->pos_x++;
+            check_movement = 1;
+        }
+        else if(game->eleven->pos_x + 1 < 10 && game->empty_room[game->eleven->pos_x + 1][game->eleven->pos_y] == PORTAL){
+            game->eleven->pos_x++;
+            check_movement = 1;
+            game->eleven->upside_down_power = 1;
         }
     }
     //LEFT
     else if(button == 'A' || button == 'a'){
         if(game->eleven->pos_y - 1 >= 0 && game->empty_room[game->eleven->pos_x][game->eleven->pos_y - 1] == EMPTY){
             game->eleven->pos_y--;
+            check_movement = 1;
+        }
+        else if(game->eleven->pos_y - 1 >= 0 && game->empty_room[game->eleven->pos_x][game->eleven->pos_y - 1] == PORTAL){
+            game->eleven->pos_y--;
+            check_movement = 1;
+            game->eleven->upside_down_power = 1;
         }
     }
     //RIGHT
     else if(button == 'D' || button == 'd'){
         if(game->eleven->pos_y + 1 < 10 && game->empty_room[game->eleven->pos_x][game->eleven->pos_y + 1] == EMPTY){
             game->eleven->pos_y++;
+            check_movement = 1;
+        }
+        else if(game->eleven->pos_y + 1 >= 0 && game->empty_room[game->eleven->pos_x][game->eleven->pos_y - 1] == PORTAL){
+            game->eleven->pos_y--;
+            check_movement = 1;
+            game->eleven->upside_down_power = 1;
+        }
+    }
+    else if(button == 'K' || button == 'k'){
+        if(game->eleven->rage < 60){
+            game->eleven->life -= 20;
+        }
+        else if(game->eleven->rage >= 60 && game->eleven->portal_power == 0){
+            int random_portal_line = rand() % 10;
+            int random_portal_column = rand() % 10;
+
+            do{
+                random_portal_line = rand() % 10;
+                random_portal_column = rand() % 10;
+                game->empty_room[random_portal_line][random_portal_column] = PORTAL;
+            }while(game->eleven->pos_x == random_portal_line && game->eleven->pos_y == random_portal_column);
+
+            game->eleven->portal_power = 1;
         }
     }
 
-    game->empty_room[game->eleven->pos_x][game->eleven->pos_y] = ELEVEN;
+    if(check_movement == 1){
+        if(game->eleven->rage <= 96){
+            game->eleven->rage += 4;
+        }
+    }
+
+    if(game->eleven->life < 1){
+        return 1;
+    }
+    else if (game->eleven->life >= 0){
+        game->empty_room[game->eleven->pos_x][game->eleven->pos_y] = ELEVEN;
+        return 0;
+    }
+
     
 }
 
@@ -373,7 +434,11 @@ int main(){
     Will *will;
     Chrollo *chrollo;
     Game *game;
+
+    //GAME VARIABLES
     int EOG = 1;
+    int isElevenDead = 0;
+    int ChangeMap = 0;
 
     will = (Will*) malloc(1 * sizeof(Will));
     will = create_will(will);
@@ -396,9 +461,9 @@ int main(){
     //map_generator(game);
     //show_map(game);
 
-    while(EOG == 1){
+    while(EOG == 1 && isElevenDead == 0 && game->eleven->upside_down_power == 0){
         //will_movement(game);
-        eleven_movement(game);
+        isElevenDead = eleven_mechanic(game);
         //chrollo_movement(game);
         //show_map(game);
         //show_upside_down(game);
