@@ -9,8 +9,9 @@
 #define CHROLLO 'C'
 #define EMPTY '_'
 #define PORTAL '0'
-#define ROCK '@'
+#define CAR '@'
 #define TREE '#'
+#define ABANDONED_HOUSES '!'
 
 typedef struct{
 
@@ -37,19 +38,6 @@ typedef struct{
     
 }Chrollo;
 
-typedef struct{
-
-    int pos_x;
-    int pos_y;
-
-}Tree;
-
-typedef struct{
-
-    int pos_x;
-    int pos_y;
-
-}Rock;
 
 typedef struct{
 
@@ -83,7 +71,14 @@ void show_empty_room(Game* game){
         for(int j = 0; j < 10; j++){
             if(game->eleven->pos_x == i && game->eleven->pos_y == j){
                 game->empty_room[i][j] = ELEVEN;
+                printf("\033[1;33m");
                 printf(" %c", game->empty_room[i][j]);
+                printf("\033[0m");
+            }
+            else if(game->empty_room[i][j] == PORTAL){
+                printf("\033[1;31m");
+                printf(" %c", game->empty_room[i][j]);
+                printf("\033[0m");
             }
             else{
                 printf(" %c", game->empty_room[i][j]);
@@ -91,12 +86,15 @@ void show_empty_room(Game* game){
         }
         printf("\n");
     }
+    printf("\033[0;31m");
     printf("\n\nLIFE: %d\nRAGE: %d\n", game->eleven->life, game->eleven->rage);
+    printf("\033[0m");
+
 }
 
 //UPSIDE FUNCTIONS
 void upside_down_generator(Game* game){
-    int i, j;
+    int i, j, tree_posx, tree_posy, car_posx, car_posy, abandoned_houses_posx, abandoned_houses_posy;
 
     game->upside_down = (char**) malloc(20 * sizeof(char*));
 
@@ -107,6 +105,53 @@ void upside_down_generator(Game* game){
     for(i = 0; i < 20; i++){
         for(j = 0; j < 20; j++){
             game->upside_down[i][j] = EMPTY;
+        }
+    }
+
+    for(int k = 0; k < 20; k++){
+        tree_posx = rand() % 20;
+        tree_posy = rand() % 20;
+        if(game->upside_down[tree_posx][tree_posy] == EMPTY){
+            game->upside_down[tree_posx][tree_posy] = TREE;
+        }
+        else{
+            do{
+                tree_posx = rand() % 20;
+                tree_posy = rand() % 20;
+            }while(game->upside_down[tree_posx][tree_posy] != EMPTY);
+            game->upside_down[tree_posx][tree_posy] = TREE;
+        }
+    }
+
+    for(int k = 0; k < 10; k++){
+        car_posx = rand() % 20;
+        car_posy = rand() % 20;
+        if(game->upside_down[car_posx][car_posy] == EMPTY){
+            game->upside_down[car_posx][car_posy] = CAR;
+        }
+        else{
+            do{
+                car_posx = rand() % 20;
+                car_posy = rand() % 20;
+            }while(game->upside_down[car_posx][car_posy] != EMPTY);
+
+            game->upside_down[car_posx][car_posy] = TREE;
+        }
+    }
+
+    for(int k = 0 ; k < 10; k++){
+        abandoned_houses_posx = rand() % 20;
+        abandoned_houses_posy = rand() % 20;
+        if(game->upside_down[abandoned_houses_posx][abandoned_houses_posy] == EMPTY){
+            game->upside_down[abandoned_houses_posx][abandoned_houses_posx] = ABANDONED_HOUSES;
+        }
+        else{
+            do{
+                abandoned_houses_posx = rand() % 20;
+                abandoned_houses_posy = rand () % 20;
+            }while(game->upside_down[abandoned_houses_posx][abandoned_houses_posy] != EMPTY);
+
+            game->upside_down[abandoned_houses_posx][abandoned_houses_posy] = ABANDONED_HOUSES;
         }
     }
 }
@@ -140,8 +185,13 @@ void show_upside_down(Game* game){
                 printf(" %c", game->upside_down[i][j]);
                 printf("\033[0m");
             }
-            else if(game->upside_down[i][j] == ROCK){
+            else if(game->upside_down[i][j] == CAR){
                 printf("\033[0;30m");
+                printf(" %c", game->upside_down[i][j]);
+                printf("\033[0m");   
+            }
+            else if(game->upside_down[i][j] == ABANDONED_HOUSES){
+                printf("\033[0;35m");
                 printf(" %c", game->upside_down[i][j]);
                 printf("\033[0m");   
             }
@@ -151,19 +201,23 @@ void show_upside_down(Game* game){
         }
         printf("\n");
     }
+    printf("\033[0;32m");
+    printf("\n\nLIFE: %d\nRAGE: %d", game->eleven->life, game->eleven->rage);
+    printf("\033[0m");
+
 }
 
 
 
 //CHARACTERS CREATION
 
-Will* create_will(Will* will){
+Will* create_will(Will* will, Eleven* eleven){
 
     do{
-        will->pos_x = rand() % 15;
-        will->pos_y = rand() % 15;
+        will->pos_x = rand() % 20;
+        will->pos_y = rand() % 20;
 
-    }while(will->pos_x == 5 && will->pos_y == 5);
+    }while(will->pos_x == eleven->pos_x && will->pos_y == eleven->pos_y);
 
     return will;
 
@@ -285,7 +339,7 @@ int eleven_mechanic(Game* game){
     }
 }
 
-int eleven_mechanic2(Game* game){
+int eleven_mechanic_ud(Game* game){
     game->upside_down[game->eleven->pos_x][game->eleven->pos_y] = EMPTY;
     int button;
     int check_movement = 0;
@@ -362,9 +416,9 @@ int eleven_mechanic2(Game* game){
 }
 
 
-/*
+
 void will_movement(Game* game){
-    game->map[game->will->pos_x][game->will->pos_y] = EMPTY;
+    game->upside_down[game->will->pos_x][game->will->pos_y] = EMPTY;
 
         int dash_run = rand() % 11;
         int next_movement = rand() % 4;
@@ -372,25 +426,25 @@ void will_movement(Game* game){
         if(dash_run == 0){
             //UP DASH
             if(next_movement == 0){
-                if(game->will->pos_x - 2 >= 0 && game->map[game->will->pos_x - 2][game->will->pos_y] == EMPTY){
+                if(game->will->pos_x - 2 >= 0 && game->upside_down[game->will->pos_x - 2][game->will->pos_y] == EMPTY){
                     game->will->pos_x = game->will->pos_x - 2;
                 }
             }
             //DOWN DASH
             else if(next_movement == 1){
-                if(game->will->pos_x + 2 < 15 && game->map[game->will->pos_x + 2][game->will->pos_y] == EMPTY){
+                if(game->will->pos_x + 2 < 15 && game->upside_down[game->will->pos_x + 2][game->will->pos_y] == EMPTY){
                     game->will->pos_x = game->will->pos_x + 2;
                 }
             }
             //LEFT DASH
             else if(next_movement == 2){
-                if(game->will->pos_y - 2 >= 0 && game->map[game->will->pos_x][game->will->pos_y - 2] == EMPTY){
+                if(game->will->pos_y - 2 >= 0 && game->upside_down[game->will->pos_x][game->will->pos_y - 2] == EMPTY){
                     game->will->pos_y = game->will->pos_y - 2;
                 }
             }
             //RIGHT DASH
             else if(next_movement == 3){
-                if(game->will->pos_y + 2 < 15 && game->map[game->will->pos_x][game->will->pos_y + 2] == EMPTY){
+                if(game->will->pos_y + 2 < 15 && game->upside_down[game->will->pos_x][game->will->pos_y + 2] == EMPTY){
                     game->will->pos_y = game->will->pos_y + 2;
                 }
             }
@@ -398,32 +452,34 @@ void will_movement(Game* game){
         else{
             //NORMAL UP MOVEMENT
             if(next_movement == 0){
-                if(game->will->pos_x - 1 >= 0 && game->map[game->will->pos_x - 1][game->will->pos_y] == EMPTY){
+                if(game->will->pos_x - 1 >= 0 && game->upside_down[game->will->pos_x - 1][game->will->pos_y] == EMPTY){
                     game->will->pos_x--;
                 }
             }
             //NORMAL DOWN MOVEMENT
             else if(next_movement == 1){
-                if(game->will->pos_x + 1 < 15 && game->map[game->will->pos_x + 1][game->will->pos_y] == EMPTY){
+                if(game->will->pos_x + 1 < 20 && game->upside_down[game->will->pos_x + 1][game->will->pos_y] == EMPTY){
                     game->will->pos_x++;
                 }
             }
             //NORMAL LEF MOVEMENT
             else if(next_movement == 2){
-                if(game->will->pos_y - 1 >= 0 && game->map[game->will->pos_x][game->will->pos_y - 1] == EMPTY){
+                if(game->will->pos_y - 1 >= 0 && game->upside_down[game->will->pos_x][game->will->pos_y - 1] == EMPTY){
                     game->will->pos_y--;
                 }
             }
             //NORMAL RIGHT MOVEMENT
             else if(next_movement == 3){
-                if(game->will->pos_y + 1 < 15 && game->map[game->will->pos_x][game->will->pos_y + 1] == EMPTY){
+                if(game->will->pos_y + 1 < 20 && game->upside_down[game->will->pos_x][game->will->pos_y + 1] == EMPTY){
                     game->will->pos_y++;
                 }
             }
         }
 
-    game->map[game->will->pos_x][game->will->pos_y] = WILL;
+    game->upside_down[game->will->pos_x][game->will->pos_y] = WILL;
 }
+
+/*
 
 void chrollo_movement(Game* game){
     game->map[game->chrollo->pos_x][game->chrollo->pos_y] = EMPTY;
@@ -511,7 +567,7 @@ int main(){
     int ChangeMap = 0;
 
     will = (Will*) malloc(1 * sizeof(Will));
-    will = create_will(will);
+    will = create_will(will, eleven);
 
     eleven = (Eleven*) malloc(1 * sizeof(Eleven));
     eleven = create_eleven(eleven);
@@ -541,12 +597,16 @@ int main(){
         show_empty_room(game);
     }
 
-    show_upside_down(game);
+    //AFTER ENTER IN UPSIDE DOWN, ELEVEN TAKES 60 OF YOUR RAGE TO SUMMON THE PORTAL
 
 
     if(isElevenDead == 0){
+        game->eleven->rage-=60;
+
+        show_upside_down(game);
         while(isElevenDead == 0){
-            isElevenDead = eleven_mechanic2(game);
+            will_movement(game);
+            isElevenDead = eleven_mechanic_ud(game);
             show_upside_down(game);
         }
     }
