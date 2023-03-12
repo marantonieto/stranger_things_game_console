@@ -6,7 +6,6 @@
 
 #define ELEVEN 'E'
 #define WILL 'W'
-#define CHROLLO 'C'
 #define EMPTY '_'
 #define PORTAL '0'
 #define CAR '@'
@@ -37,21 +36,65 @@ typedef struct{
 
 typedef struct{
 
-    int pos_x;
-    int pos_y;
-    
-}Chrollo;
-
-
-typedef struct{
-
     char** upside_down;
     char** empty_room;
     Will* will;
-    Chrollo* chrollo;
     Eleven* eleven;
 
 }Game;
+
+void controls_box(){
+
+    int press_key;
+    printf("\033[1;34m");
+    printf("\n\nMOVIMENTACAO: W A S D\n");
+    printf("PODER DE ABRIR O PORTAL: K\n ");
+    printf("\nEleven perde 20 de vida a cada tentativa falha de abrir o portal\n\n");
+    printf("\nPressione qualquer tecla para iniciar o jogo\n");
+    printf("\033[0m");
+    press_key = getch();
+}
+
+void add_new_demodogs(Game* game){
+    int new_demodog_posx = rand() % 20;
+    int new_demodog_posy = rand() % 20;
+    if((game->eleven->pos_x - game->will->pos_x <= 7 || game->will->pos_x - game->eleven->pos_x <= 7) ){
+        for(int i = 0; i < 2; i++){
+            do{
+                new_demodog_posx = rand() % 20;
+                new_demodog_posy = rand() % 20;
+            }while(game->upside_down[new_demodog_posx][new_demodog_posy] != EMPTY);
+            game->upside_down[new_demodog_posx][new_demodog_posy] = DEMODOGS;
+        }
+    }
+    else if((game->eleven->pos_y - game->will->pos_y <= 7 || game->will->pos_y - game->eleven->pos_y <= 7)){
+        for(int i = 0; i < 2; i++){
+            do{
+                new_demodog_posx = rand() % 20;
+                new_demodog_posy = rand() % 20;
+            }while(game->upside_down[new_demodog_posx][new_demodog_posy] != EMPTY);
+            game->upside_down[new_demodog_posx][new_demodog_posy] = DEMODOGS;
+        }
+    }
+    else if(game->eleven->pos_x - game->will->pos_x <= 7 && game->eleven->pos_y - game->will->pos_y <= 7 || game->will->pos_x - game->eleven->pos_x <= 7 && game->will->pos_x - game->eleven->pos_x <= 7){
+        for(int i = 0; i < 2; i++){
+            do{
+                new_demodog_posx = rand() % 20;
+                new_demodog_posy = rand() % 20;
+            }while(game->upside_down[new_demodog_posx][new_demodog_posy] != EMPTY);
+            game->upside_down[new_demodog_posx][new_demodog_posy] = DEMODOGS;
+        }
+    }
+    else if(game->eleven->pos_y - game->will->pos_y <= 7 && game->eleven->pos_x - game->will->pos_x <= 7 || game->will->pos_y - game->eleven->pos_y <= 7 && game->will->pos_x - game->eleven->pos_x <= 7){
+        for(int i = 0; i < 2; i++){
+            do{
+                new_demodog_posx = rand() % 20;
+                new_demodog_posy = rand() % 20;
+            }while(game->upside_down[new_demodog_posx][new_demodog_posy] != EMPTY);
+            game->upside_down[new_demodog_posx][new_demodog_posy] = DEMODOGS;
+        }
+    }
+}
 
 void empty_room_generator(Game* game){
     int i, j;
@@ -90,10 +133,20 @@ void show_empty_room(Game* game){
         }
         printf("\n");
     }
-    printf("\033[0;31m");
-    printf("\n\nLIFE: %d\nRAGE: %d\n", game->eleven->life, game->eleven->rage);
+    printf("\033[1;31m");
+    printf("\n\nLIFE: %d\nRAGE: %d\n\n", game->eleven->life, game->eleven->rage);
     printf("\033[0m");
 
+    if(game->eleven->portal_power == 0){
+        printf("\033[1;32m");
+        printf("WILL ESTA NO MUNDO INVERTIDO, ABRA O PORTAL PARA TENTAR ENCONTRA-LO\n");
+        printf("\033[0m");
+    }
+    else{
+        printf("\033[1;32m");
+        printf("ENTRE NO PORTAL PARA TENTAR SALVAR O WILL!");
+        printf("\033[0m");
+    }
 }
 
 //UPSIDE FUNCTIONS
@@ -175,7 +228,7 @@ void upside_down_generator(Game* game){
         }
     }
 
-    for(int k = 0; k < 4; k++){
+    for(int k = 0; k < 8; k++){
         demodogs_posx = rand() % 20;
         demodogs_posy = rand() % 20;
         if(game->upside_down[demodogs_posx][demodogs_posy] == EMPTY){
@@ -204,14 +257,18 @@ void show_upside_down(Game* game){
                 printf(" %c", game->upside_down[i][j]);
                 printf("\033[0m");
             }
-            else if(game->will->pos_x == i && game->will->pos_y == j){
+            else if((game->will->pos_x == i && game->will->pos_y == j)){
                 game->upside_down[i][j] = WILL;
+                if(game->eleven->take_will == 0){
                 printf("\033[1;36m");
                 printf(" %c", game->upside_down[i][j]);
                 printf("\033[0m");
+                }
+                else{
+                    printf(" _");
+                }
             }
-            else if(game->chrollo->pos_x == i && game->chrollo->pos_y == j){
-                game->upside_down[i][j] = CHROLLO;
+            else if(game->upside_down[i][j] == PANCAKE){
                 printf("\033[1;31m");
                 printf(" %c", game->upside_down[i][j]);
                 printf("\033[0m");
@@ -231,6 +288,11 @@ void show_upside_down(Game* game){
                 printf(" %c", game->upside_down[i][j]);
                 printf("\033[0m");   
             }
+            else if(game->upside_down[i][j] == PORTAL){
+                printf("\033[1;34m");
+                printf(" %c", game->upside_down[i][j]);
+                printf("\033[0m");
+            }
             else if(game->upside_down[i][j] == DEMODOGS){
                 printf(" _");
             }
@@ -240,12 +302,32 @@ void show_upside_down(Game* game){
         }
         printf("\n");
     }
-    printf("\033[0;32m");
-    printf("\n\nLIFE: %d\nRAGE: %d", game->eleven->life, game->eleven->rage);
+    printf("\033[1;32m");
+    printf("\n\nLIFE: %d\nRAGE: %d\n\n", game->eleven->life, game->eleven->rage);
     printf("\033[0m");
 
-}
+    if(game->eleven->take_will == 0 && game->eleven->portal_power == 0){
+        printf("\033[1;31m");
+        printf("ENCONTRE O WILL E ABRA O PORTAL PARA VOLTAR AO MUNDO REAL!\n");
+        printf("\033[0m");
+    }
+    else if(game->eleven->take_will == 0 && game->eleven->portal_power == 1){
+        printf("\033[1;31m");
+        printf("ENCONTRE O WILL E O LEVE PARA O PORTAL!\n");
+        printf("\033[0m");
+    }
+    else if(game->eleven->take_will == 1 && game->eleven->portal_power == 0){
+        printf("\033[1;31m");
+        printf("VOCE ESTA COM O WILL, ABRA O PORTAL E O LEVE PARA O MUNDO REAL!");
+        printf("\033[0m");
+    }
+    else{
+        printf("\033[1;31m");
+        printf("LEVE O WILL PARA O PORTAL!");
+        printf("\033[0m");
+    }
 
+}
 
 
 //CHARACTERS CREATION
@@ -261,19 +343,6 @@ Will* create_will(Will* will, Eleven* eleven){
     return will;
 
 }
-
-Chrollo* create_chrollo(Chrollo* chrollo, Will* will){
-
-    do{
-        chrollo->pos_x = rand() % 15;
-        chrollo->pos_y = rand() % 15;
-
-    }while((chrollo->pos_x == will->pos_x) && (chrollo->pos_y == will->pos_y));
-
-    return chrollo;
-
-}
-
 
 Eleven* create_eleven(Eleven* eleven){
 
@@ -405,6 +474,7 @@ int eleven_mechanic_ud(Game* game){
             game->eleven->take_will = 1;
         }
         else if((game->eleven->pos_x - 1 >= 0) && (game->upside_down[game->eleven->pos_x - 1][game->eleven->pos_y] == PORTAL) && (game->eleven->take_will == 1)){
+            game->eleven->pos_x--;
             game->will->will_saved = 1;
         }
         else if((game->eleven->pos_x - 1 >= 0) && (game->upside_down[game->eleven->pos_x - 1][game->eleven->pos_y] == DEMODOGS)){
@@ -432,6 +502,7 @@ int eleven_mechanic_ud(Game* game){
             game->eleven->take_will = 1;
         }
         else if((game->eleven->pos_x + 1 < 20) && (game->upside_down[game->eleven->pos_x + 1][game->eleven->pos_y] == PORTAL) && (game->eleven->take_will == 1)){
+            game->eleven->pos_x++;
             game->will->will_saved = 1;
         }
         else if((game->eleven->pos_x + 1 < 20) && (game->upside_down[game->eleven->pos_x + 1][game->eleven->pos_y] == DEMODOGS)){
@@ -459,6 +530,7 @@ int eleven_mechanic_ud(Game* game){
             game->eleven->take_will = 1;
         }
         else if((game->eleven->pos_y - 1 >= 0) && (game->upside_down[game->eleven->pos_x][game->eleven->pos_y - 1] == PORTAL) && (game->eleven->take_will == 1)){
+            game->eleven->pos_y--;
             game->will->will_saved = 1;
         }
         else if((game->eleven->pos_y - 1 >= 0) && (game->upside_down[game->eleven->pos_x][game->eleven->pos_y - 1] == DEMODOGS)){
@@ -487,6 +559,7 @@ int eleven_mechanic_ud(Game* game){
             game->eleven->take_will = 1;
         }
         else if((game->eleven->pos_y + 1 < 20) && (game->upside_down[game->eleven->pos_x][game->eleven->pos_y + 1] == PORTAL) && (game->eleven->take_will == 1)){
+            game->eleven->pos_y++;
             game->will->will_saved = 1;
         }
         else if((game->eleven->pos_y + 1 < 20) && (game->upside_down[game->eleven->pos_x][game->eleven->pos_y + 1] == DEMODOGS)){
@@ -589,15 +662,14 @@ void will_movement(Game* game){
                 }
             }
         }
-
+    
     game->upside_down[game->will->pos_x][game->will->pos_y] = WILL;
 }
 
 
-Game* starting_game(Game* game, Eleven* eleven, Will* will, Chrollo* chrollo){
+Game* starting_game(Game* game, Eleven* eleven, Will* will){
     game->eleven = eleven;
     game->will = will;
-    game->chrollo = chrollo;
 }
 
 
@@ -610,7 +682,6 @@ int main(){
     char** empty_room;
     Eleven *eleven;
     Will *will;
-    Chrollo *chrollo;
     Game *game;
 
     //GAME VARIABLES
@@ -623,29 +694,18 @@ int main(){
 
     eleven = (Eleven*) malloc(1 * sizeof(Eleven));
     eleven = create_eleven(eleven);
-
-    chrollo = (Chrollo*) malloc(1 * sizeof(Chrollo));
-    chrollo = create_chrollo(chrollo, will);
     
-
     game = (Game*) malloc(1 * sizeof(Game));
-    game = starting_game(game, eleven, will, chrollo);
+    game = starting_game(game, eleven, will);
 
-    //upside_down_generator(game);
-    //show_upside_down(game);
+    controls_box();
+
     empty_room_generator(game);
     show_empty_room(game);
     upside_down_generator(game);
-    
-    //map_generator(game);
-    //show_map(game);
 
     while(EOG == 1 && isElevenDead == 0 && game->eleven->upside_down_power == 0){
-        //will_movement(game);
         isElevenDead = eleven_mechanic(game);
-        //chrollo_movement(game);
-        //show_map(game);
-        //show_upside_down(game);
         show_empty_room(game);
     }
 
@@ -658,14 +718,27 @@ int main(){
         game->eleven->rage-=60;
         game->eleven->portal_power = 0;
         game->eleven->upside_down_power = 0;
+        game->will->will_saved = 0;
+        game->eleven->take_will = 0;
 
         show_upside_down(game);
-        game->will->will_saved = 0;
+
         while(isElevenDead == 0 && game->will->will_saved == 0){
             will_movement(game);
             isElevenDead = eleven_mechanic_ud(game);
+            add_new_demodogs(game);
             show_upside_down(game);
         }
+
+        if(isElevenDead == 1){
+            printf("\n\nELEVEN MORREU, VOCE PERDEU! :(\n");
+        }
+        else{
+            printf("\n\nWILL FOI SALVO, VOCE VENCEU!\n\nVida restante da eleven: %d", game->eleven->life);
+        }
+    }
+    else{
+        printf("\n\nELEVEN MORREU, VOCE PERDEU! :(\n");
     }
 
 
