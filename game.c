@@ -21,6 +21,8 @@ typedef struct{
     int life;
     int rage;
     int portal_power;
+    int clairvoyance_power;
+    int clairvoyance_power_qtd;
     int upside_down_power;
     int take_will;
 
@@ -46,10 +48,26 @@ typedef struct{
 void controls_box(){
 
     int press_key;
-    printf("\033[1;34m");
-    printf("\n\nMOVIMENTACAO: W A S D\n");
-    printf("PODER DE ABRIR O PORTAL: K\n ");
-    printf("\nEleven perde 20 de vida a cada tentativa falha de abrir o portal\n\n");
+    printf("\033[1;37m");
+    printf("\n\nMOVIMENTACAO: W A S D\n\n");
+    printf("\033[0m");
+
+    printf("\033[1;33m");
+    printf("PODER DE ABRIR O PORTAL: K\n");
+    printf("PODER DE CLARIVIDENCIA (ENXERGAR INIMIGOS POR UMA RODADA): J\n");
+    printf("\033[0m");
+    
+    printf("\033[1;32m");
+    printf("\nEleven perde 20 de vida e 10 de furia a cada tentativa falha de abrir o portal!\n");
+    printf("Eleven perdera 15 de vida e 10 de furia a cada tentativa falha de utilizar a clarividencia!\n");
+    printf("\n\nSoh eh possivel abrir o portal com ao menos 60 de furia, e soh eh possivel utilizar o poder da clarividencia com ao menos 30 de furia!\n");
+    printf("\033[0m");
+
+    printf("\033[1;35m");
+    printf("\nRESGATE O WILL\n");
+    printf("\033[0m");
+
+    printf("\033[1;37m");
     printf("\nPressione qualquer tecla para iniciar o jogo\n");
     printf("\033[0m");
     press_key = getch();
@@ -58,41 +76,32 @@ void controls_box(){
 void add_new_demodogs(Game* game){
     int new_demodog_posx = rand() % 20;
     int new_demodog_posy = rand() % 20;
-    if((game->eleven->pos_x - game->will->pos_x <= 7 || game->will->pos_x - game->eleven->pos_x <= 7) ){
-        for(int i = 0; i < 2; i++){
-            do{
-                new_demodog_posx = rand() % 20;
-                new_demodog_posy = rand() % 20;
-            }while(game->upside_down[new_demodog_posx][new_demodog_posy] != EMPTY);
-            game->upside_down[new_demodog_posx][new_demodog_posy] = DEMODOGS;
-        }
+    int delta_x;
+    int delta_y;
+    if(game->will->pos_x >= game->eleven->pos_x){
+        delta_x = game->will->pos_x - game->eleven->pos_x;
     }
-    else if((game->eleven->pos_y - game->will->pos_y <= 7 || game->will->pos_y - game->eleven->pos_y <= 7)){
-        for(int i = 0; i < 2; i++){
-            do{
-                new_demodog_posx = rand() % 20;
-                new_demodog_posy = rand() % 20;
-            }while(game->upside_down[new_demodog_posx][new_demodog_posy] != EMPTY);
-            game->upside_down[new_demodog_posx][new_demodog_posy] = DEMODOGS;
-        }
+    else if(game->will->pos_x < game->eleven->pos_x){
+        delta_x = game->eleven->pos_x - game->will->pos_x;
     }
-    else if(game->eleven->pos_x - game->will->pos_x <= 7 && game->eleven->pos_y - game->will->pos_y <= 7 || game->will->pos_x - game->eleven->pos_x <= 7 && game->will->pos_x - game->eleven->pos_x <= 7){
-        for(int i = 0; i < 2; i++){
-            do{
-                new_demodog_posx = rand() % 20;
-                new_demodog_posy = rand() % 20;
-            }while(game->upside_down[new_demodog_posx][new_demodog_posy] != EMPTY);
-            game->upside_down[new_demodog_posx][new_demodog_posy] = DEMODOGS;
-        }
+
+    if(game->will->pos_y >= game->eleven->pos_y){
+        delta_y = game->will->pos_y - game->eleven->pos_y;
     }
-    else if(game->eleven->pos_y - game->will->pos_y <= 7 && game->eleven->pos_x - game->will->pos_x <= 7 || game->will->pos_y - game->eleven->pos_y <= 7 && game->will->pos_x - game->eleven->pos_x <= 7){
-        for(int i = 0; i < 2; i++){
-            do{
-                new_demodog_posx = rand() % 20;
-                new_demodog_posy = rand() % 20;
-            }while(game->upside_down[new_demodog_posx][new_demodog_posy] != EMPTY);
-            game->upside_down[new_demodog_posx][new_demodog_posy] = DEMODOGS;
-        }
+    else if(game->will->pos_y < game->eleven->pos_y){
+        delta_y = game->eleven->pos_y - game->will->pos_y;
+    }
+
+    if(game->eleven->take_will == 0){
+        if((delta_x <= 5 && delta_y <= 5)){
+            for(int i = 0; i < 6;i++){
+                do{
+                    new_demodog_posx = rand() % 20;
+                    new_demodog_posy = rand() % 20;
+                }while(game->upside_down[new_demodog_posx][new_demodog_posy] != EMPTY);
+                game->upside_down[new_demodog_posx][new_demodog_posy] = DEMODOGS;
+            }
+	    }
     }
 }
 
@@ -139,7 +148,7 @@ void show_empty_room(Game* game){
 
     if(game->eleven->portal_power == 0){
         printf("\033[1;32m");
-        printf("WILL ESTA NO MUNDO INVERTIDO, ABRA O PORTAL PARA TENTAR ENCONTRA-LO\n");
+        printf("WILL ESTA NO MUNDO INVERTIDO, ABRA O PORTAL (K) PARA TENTAR ENCONTRA-LO\n");
         printf("\033[0m");
     }
     else{
@@ -228,7 +237,7 @@ void upside_down_generator(Game* game){
         }
     }
 
-    for(int k = 0; k < 8; k++){
+    for(int k = 0; k < 15; k++){
         demodogs_posx = rand() % 20;
         demodogs_posy = rand() % 20;
         if(game->upside_down[demodogs_posx][demodogs_posy] == EMPTY){
@@ -294,7 +303,13 @@ void show_upside_down(Game* game){
                 printf("\033[0m");
             }
             else if(game->upside_down[i][j] == DEMODOGS){
-                printf(" _");
+                //printf(" X");
+                if(game->eleven->clairvoyance_power == 1){
+                    printf(" X");
+                }
+                else{
+                    printf(" _");
+                }
             }
             else{
                 printf(" %c", game->upside_down[i][j]);
@@ -308,17 +323,19 @@ void show_upside_down(Game* game){
 
     if(game->eleven->take_will == 0 && game->eleven->portal_power == 0){
         printf("\033[1;31m");
-        printf("ENCONTRE O WILL E ABRA O PORTAL PARA VOLTAR AO MUNDO REAL!\n");
+        printf("ENCONTRE O WILL E ABRA O PORTAL (K) PARA VOLTAR AO MUNDO REAL!\n");
+        printf("DEMODOGS SURGIRAO QUANDO VOCE SE APROXIMAR DE WILL, CUIDADO!");
         printf("\033[0m");
     }
     else if(game->eleven->take_will == 0 && game->eleven->portal_power == 1){
         printf("\033[1;31m");
         printf("ENCONTRE O WILL E O LEVE PARA O PORTAL!\n");
+        printf("DEMODOGS SURGIRAO QUANDO VOCE SE APROXIMAR DE WILL, CUIDADO!");
         printf("\033[0m");
     }
     else if(game->eleven->take_will == 1 && game->eleven->portal_power == 0){
         printf("\033[1;31m");
-        printf("VOCE ESTA COM O WILL, ABRA O PORTAL E O LEVE PARA O MUNDO REAL!");
+        printf("VOCE ESTA COM O WILL, ABRA O PORTAL (K) E O LEVE PARA O MUNDO REAL!");
         printf("\033[0m");
     }
     else{
@@ -326,6 +343,10 @@ void show_upside_down(Game* game){
         printf("LEVE O WILL PARA O PORTAL!");
         printf("\033[0m");
     }
+
+    printf("\033[0;33m");
+    printf("\n\nQUANTIDADE DE CLARIVIDENCIAS (J) DISPONIVEIS: %d\n", game->eleven->clairvoyance_power_qtd);
+    printf("\033[0m");
 
 }
 
@@ -417,6 +438,12 @@ int eleven_mechanic(Game* game){
     else if(button == 'K' || button == 'k'){
         if(game->eleven->rage < 60){
             game->eleven->life -= 20;
+            if(game->eleven->rage - 10 <= 0){
+                game->eleven->rage = 0;
+            }
+            else if(game->eleven->rage - 10 > 0){
+                game->eleven->rage -= 10;
+            }
         }
         else if(game->eleven->rage >= 60 && game->eleven->portal_power == 0){
             int random_portal_line = rand() % 10;
@@ -449,6 +476,7 @@ int eleven_mechanic(Game* game){
 
 int eleven_mechanic_ud(Game* game){
     game->upside_down[game->eleven->pos_x][game->eleven->pos_y] = EMPTY;
+    game->eleven->clairvoyance_power = 0;
     int button;
     int check_movement = 0;
 
@@ -571,6 +599,12 @@ int eleven_mechanic_ud(Game* game){
     else if(button == 'K' || button == 'k'){
         if(game->eleven->rage < 60){
             game->eleven->life -= 20;
+            if(game->eleven->rage - 10 <= 0){
+                game->eleven->rage = 0;
+            }
+            else if(game->eleven->rage - 10 > 0){
+                game->eleven->rage -= 10;
+            }
         }
         else if(game->eleven->rage >= 60 && game->eleven->portal_power == 0){
             int random_portal_line = rand() % 20;
@@ -582,6 +616,21 @@ int eleven_mechanic_ud(Game* game){
             }while(game->upside_down[random_portal_line][random_portal_column] != EMPTY);
             game->upside_down[random_portal_line][random_portal_column] = PORTAL;
             game->eleven->portal_power = 1;
+        }
+    }
+    else if(button == 'J' || button == 'j'){
+        if(game->eleven->rage >= 40 && game->eleven->clairvoyance_power_qtd > 0){
+            game->eleven->clairvoyance_power = 1;
+            game->eleven->clairvoyance_power_qtd--;
+        }
+        else if(game->eleven->rage < 40){
+            game->eleven->life -= 15;
+            if(game->eleven->rage - 10 <= 0){
+                game->eleven->rage = 0;
+            }
+            else if(game->eleven->rage - 10 > 0){
+                game->eleven->rage -= 10;
+            }
         }
     }
 
@@ -687,7 +736,6 @@ int main(){
     //GAME VARIABLES
     int EOG = 1;
     int isElevenDead = 0;
-    int ChangeMap = 0;
 
     will = (Will*) malloc(1 * sizeof(Will));
     will = create_will(will, eleven);
@@ -720,6 +768,7 @@ int main(){
         game->eleven->upside_down_power = 0;
         game->will->will_saved = 0;
         game->eleven->take_will = 0;
+        game->eleven->clairvoyance_power_qtd = 3;
 
         show_upside_down(game);
 
@@ -731,14 +780,20 @@ int main(){
         }
 
         if(isElevenDead == 1){
+            printf("\033[1;32m");
             printf("\n\nELEVEN MORREU, VOCE PERDEU! :(\n");
+            printf("\033[0m");
         }
         else{
+            printf("\033[1;32m");
             printf("\n\nWILL FOI SALVO, VOCE VENCEU!\n\nVida restante da eleven: %d", game->eleven->life);
+            printf("\033[0m");
         }
     }
     else{
+        printf("\033[1;32m");
         printf("\n\nELEVEN MORREU, VOCE PERDEU! :(\n");
+        printf("\033[0m");
     }
 
 
